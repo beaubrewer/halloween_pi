@@ -1,0 +1,96 @@
+{
+  "min_trigger_time": 5000,
+  "background_music": [
+    {
+      "filename": "audio/come_out_come_out_bg.ogg"
+    },
+    {
+      "filename": "audio/follow_the_yellow_brick_road_bg.ogg"
+    },
+    {
+      "filename": "audio/I_do_believe_in_spooks_bg.ogg"
+    },
+    {
+      "filename": "audio/if_I_only_had_a_brain_bg.ogg"
+    },
+    {
+      "filename": "audio/king_of_the_forest_bg.ogg"
+    },
+    {
+      "filename": "audio/lion_courage_song_bg.ogg"
+    },
+    {
+      "filename": "audio/lions_and_tigers_and_bears_bg.ogg"
+    },
+    {
+      "filename": "audio/witches_guards_bg.ogg"
+    }
+  ],
+  "foreground_sounds": [
+    {
+      "position": 1,
+      "filename": "audio/I_am_oz_fg.ogg",
+      "cuepoints": [
+        {
+          "type": "FOG:START",
+          "time": 3140
+        },
+        {
+          "type": "FOG:END",
+          "time": 5100
+        },
+        {
+          "type": "FOG:START",
+          "time": 10370
+        },
+        {
+          "type": "FOG:END",
+          "time": 12500
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "filename": "audio/ill_get_you_my_pretty_fg.ogg",
+      "cuepoints": []
+    },
+    {
+      "position": 3,
+      "filename": "audio/dorthy_melts_witch_fg.ogg",
+      "cuepoints": [
+        {
+          "type": "FOG:START",
+          "time": 4600
+        },
+        {
+          "type": "FOG:END",
+          "time": 8700
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "filename": "audio/wait_here_fg.ogg",
+      "cuepoints": []
+    },
+    {
+      "position": 6,
+      "filename": "audio/pay_no_attention_fg.ogg",
+      "cuepoints": [
+        {
+          "type": "FOG:START",
+          "time": 1100
+        },
+        {
+          "type": "FOG:END",
+          "time": 3200
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "filename": "audio/you_believe_in_spooks_fg.ogg",
+      "cuepoints": []
+    }
+  ]
+}

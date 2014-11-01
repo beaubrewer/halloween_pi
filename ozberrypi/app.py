@@ -1,43 +1,85 @@
-import tornado.ioloop
-import tornado.web
-import tornado.websocket
-import os
+import os, sys, time
+import json
+import bgmusic, soundfx
+import argparse
+import webcontrol
+from multiprocessing import Process, Queue
+import fogcontrol as fog
 
-clients = []
-settings = {
-  "static_path": os.path.join(os.path.dirname(__file__),"www"),
-  "cookie_secret": "134449a1d4",
-  "xsrf_cookies": True
-}
+def parseJSON(url):
+  with open(url) as f:
+    js = json.load(f)
+  return js
 
 
-class IndexHandler(tornado.web.RequestHandler):
-  @tornado.web.asynchronous
-  def get(request):
-    print("rendering request")
-    request.render("www/index.html")
+def init_config(config):
+  bg_music = config['background_music']
+  fg_sounds = config['foreground_sounds']
+  return (bg_music, fg_sounds)
 
-class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
-  def check_origin(self, origin):
-    return True
 
-  def open(self, *args):
-    print("open", "WebSocketChatHandler")
-    clients.append(self)
+def parse_event(event):
+  # print(''.join(('Parsing event: '+event)))
+  cls, method = event.lower().split(':')
+  execute_method(cls, method)
 
-  def on_message(self, message):        
-    print(message)
-    for client in clients:
-        client.write_message(message)
-        
-  def on_close(self):
-    clients.remove(self)
 
-app = tornado.web.Application([
-  (r'/ws', WebSocketChatHandler),
-  (r'/', IndexHandler),
-  (r'/(.*)', tornado.web.StaticFileHandler, dict(path=settings['static_path']))
-])
+def main(config_url):
+  global fgsounds_rqueue
+  bg_music_files, fg_sound_files = init_config(parseJSON(config_url))
+  bgmusic_squeue = Queue()
+  bgmusic_rqueue = Queue()
+  bgprocess = Process(target=bgmusic.playMusic,args=(bgmusic_squeue, bgmusic_rqueue, bg_music_files,))
+  bgprocess.daemon=True
+  bgprocess.start()
+  
+  fgsounds_rqueue = Queue()
+  fgsounds_squeue = Queue()
+  fgprocess = Process(target=soundfx.init, args=(fgsounds_rqueue, fgsounds_squeue, fg_sound_files))
+  fgprocess.daemon=True
+  fgprocess.start()
 
-app.listen(8000)
-tornado.ioloop.IOLoop.instance().start()
+  # start web application
+  web_squeue = Queue()
+  web_rqueue = Queue()
+  webprocess = Process(target=webcontrol.startup, args=(web_squeue, web_rqueue))
+  webprocess.daemon=True
+  webprocess.start();
+
+  try:
+    while True:
+      time.sleep(.02)
+      if not web_rqueue.empty():
+        parse_event(web_rqueue.get())
+      if not  fgsounds_rqueue.empty():
+        event = fgsounds_rqueue.get()
+        event_category = event.lower().split(':')[0]
+        if event_category == 'mute':
+          bgmusic_squeue.put(event)
+        elif event_category == 'sfxupdate':
+          web_squeue.put(event)
+        else:
+          parse_event(event)
+
+  except KeyboardInterrupt:
+    fog.cleanup();
+    web_squeue.put('QUIT')
+    fgsounds_squeue.put('QUIT')
+    bgprocess.join()
+    fgprocess.join()
+    webprocess.join()
+    time.sleep(10)
+
+
+def execute_method(class_name, method_name):
+  # print(''.join(('executing ',class_name,'.',method_name)))
+  cls = getattr(sys.modules[__name__], class_name)
+  if cls:
+    getattr(cls, method_name)()
+
+
+if __name__ == '__main__':
+  parse = argparse.ArgumentParser(description="Halloween Theatre")
+  parse.add_argument('--config', required=False, default='config.json')
+  args = parse.parse_args();
+  main(args.config)
